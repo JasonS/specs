@@ -49,8 +49,8 @@ notation is `docs/notation.md` in the graphqall repository. Read all three befor
   factory per type; a task that adds a type tests pass in adds its factory. Expected values are
   plain literals written inside `toEqual` or `toMatchObject`, never in a variable or `it.each` table
   typed with a `src` type. SDL input comes from `makeResourceSdl` (Task 1), with the test passing
-  only the lines its assertions are about. Only Tasks 2 and 3, whose subject is the text's layout
-  (blank lines, comments, `\r\n`, columns), write SDL out in full.
+  only the lines its assertions are about. A test whose point is the SDL's own shape (broken syntax,
+  layout, blank lines, comments, `\r\n`, columns, as in Tasks 2 and 3) writes that SDL inline.
 - After a task's tests pass, `pnpm mutation` reports every mutant on the task's changed lines as
   caught. A surviving mutant gets a test; a mutant that can't change behavior goes to the owner.
 - A defect found while building gets a failing test first, run red, then the fix.
