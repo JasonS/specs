@@ -94,7 +94,7 @@ Each task that depends on one of these names it and builds the recommended optio
    `default` response is `Status`, so `Status` is present whenever there is an operation; `Empty`
    when a method returns it; `Date` and `TimeOfDay` when a field has that type. Their names stay
    reserved either way (`model_name_taken`).
-4. **Wording of the `filter` and `orderBy` descriptions.** The spec says they list the fields.
+4. **Wording of the `filter` and `orderBy` descriptions (decided: as recommended).** The spec says they list the fields.
    Recommendation: `Fields you can filter by: title, genre.` and
    `Fields you can sort by: title, createdAt.`, fields in declaration order. The list builder puts
    them in `Param.description`, so the format only copies them.
