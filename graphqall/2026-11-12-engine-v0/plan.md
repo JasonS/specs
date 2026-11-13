@@ -118,12 +118,11 @@ Each task that depends on one of these names it and builds the recommended optio
    format is a fake of `IFileFormat` and must come from `makeStubFormat` in core's
    `tests/factories.ts`. Recommendation: the R4 test imports that one test factory by relative path,
    besides the public entry points; it imports no engine internals.
-8. **Testing the rewritten `syntax_error` messages.** The notation asks for rewritten messages for
-   common graphql-js syntax errors, TS-07 rule 4 forbids asserting message text, and `pnpm mutation`
-   requires every mutant caught, so the message table's mutants in Task 3 would survive.
-   Recommendation: `parseBlocks` tests may assert the exact message of `syntax_error` for each of
-   the four rewritten graphql-js forms and the fallback, as the only exception to TS-07 rule 4.
-   Alternative: the owner accepts those mutants as approved exceptions.
+8. **Testing the rewritten `syntax_error` messages (decided).** The rewording is a plain function,
+   `rewordSyntaxError(graphqlMessage: string): string` in `packages/core/src/reword-syntax-error.ts`
+   (TS-03 rule 3), tested directly with a table: graphql-js message in, our message out. TS-07 rule
+   4 is unchanged: those tests check the function's return value, and `parseBlocks` tests check only
+   `kind`, `code`, `severity`, `where` and `path`.
 
 ## Test factories
 
@@ -256,8 +255,9 @@ it.each(CODES)("gives %s a message", (code) => {
 
 ### Task 3: `parseBlocks` and span mapping
 
-**Files:** Create `packages/core/src/parse-blocks.ts`, `packages/core/src/locate.ts`. Test
-`packages/core/tests/parse-blocks.test.ts`.
+**Files:** Create `packages/core/src/parse-blocks.ts`, `packages/core/src/locate.ts`,
+`packages/core/src/reword-syntax-error.ts`. Test `packages/core/tests/parse-blocks.test.ts`,
+`packages/core/tests/reword-syntax-error.test.ts`.
 
 **Interfaces:**
 
@@ -265,6 +265,7 @@ it.each(CODES)("gives %s a message", (code) => {
 - Produces:
   `type ParsedBlock = { block: Block; document?: DocumentNode; stub?: { keyword: string; name: string } }`;
   `parseBlocks(blocks: readonly Block[]): Outcome<readonly ParsedBlock[]>`;
+  `rewordSyntaxError(graphqlMessage: string): string` (Decision 8);
   `toSpan(block: Block, loc: Location): Span` (maps a graphql `Location` to the caller's SDL by the
   spec's formula); `sourceOf(block: Block, node: ASTNode): Source`.
 
@@ -282,8 +283,8 @@ it.each(CODES)("gives %s a message", (code) => {
   - Review Focus 1: the R12 SDL and the mid-line error SDL written with `\r\n` give the same `where`
     as with `\n`; no span ends one column late because of `\r`.
   - Review Focus 5: a field below `"""Café"""` has the column you count by hand.
-  - Decision 8: each of the four rewritten graphql-js syntax error forms, and one unrecognized form,
-    gives its exact rewritten `message`.
+  - Decision 8, in `reword-syntax-error.test.ts`: an `it.each` table where each of the four
+    graphql-js syntax error forms, and one unrecognized form, maps to its exact reworded text.
   - A failed block with a name becomes a stub; a failed unnamed block yields only its problem.
 - [ ] **Step 2: Run them to see them fail.**
       `pnpm --filter @graphqall/core exec vitest run tests/parse-blocks.test.ts`.
