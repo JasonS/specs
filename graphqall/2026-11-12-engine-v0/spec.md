@@ -136,33 +136,33 @@ notation.
 ### Shared types (core)
 
 ```ts
-interface Span {
+type Span = {
   line: number;
   column: number;
   endLine: number;
   endColumn: number;
-}
+};
 // 1-based lines and columns in the caller's SDL; the end is just after the last character.
 
 type ProblemKind = "invalid_sdl" | "invalid_design";
-interface Problem<C extends ProblemCode = ProblemCode> {
+type Problem<C extends ProblemCode = ProblemCode> = {
   kind: ProblemKind;
   code: C;
   severity: "error" | "warning";
   message: string;
   where: Span;
   path?: string; // such as 'Book.publisher'
-}
+};
 
-interface Outcome<T> {
+type Outcome<T> = {
   value: T;
   problems: readonly Problem[];
-}
+};
 
-interface Source {
+type Source = {
   sdl: string;
   where: Span;
-}
+};
 // sdl: the node printed with graphql's print(), which keeps descriptions and drops # comments
 ```
 
@@ -176,6 +176,8 @@ interface Source {
   Problems). Tests never assert on messages (TS-07 rule 4). `syntax_error` is the one code whose
   message varies; see step 2.
 - Types use `readonly` throughout.
+- Data shapes are written with `type`. `interface` is used only for behavior: the `I`-prefixed
+  contracts such as `IMethodBuilder`, `IFileFormat` and `ITarget`.
 
 ### Pipeline steps (core)
 
@@ -269,19 +271,19 @@ interface IFileFormat<D> {
 interface ITarget<D> {
   run(graph: ResourceGraph): Outcome<{ design: D; files: readonly OutputFile[] }>;
 }
-interface OutputFile {
+type OutputFile = {
   path: string;
   content: string;
-}
+};
 
 function composeTarget<D>(style: IDesignStyle<D>, format: IFileFormat<D>): ITarget<D>;
 function render<D>(sdl: string, target: ITarget<D>): RenderResult<D>;
-interface RenderResult<D> {
+type RenderResult<D> = {
   graph: ResourceGraph;
   design: D;
   files: readonly OutputFile[];
   problems: readonly Problem[]; // every step's, ordered by where
-}
+};
 ```
 
 `composeTarget` runs the style, passes its design to the format and concatenates both steps'
@@ -292,15 +294,15 @@ calling `composeTarget(aipStyle(), theirFormat)` (R4).
 ### The resource graph (core)
 
 ```ts
-interface ResourceGraph {
+type ResourceGraph = {
   resources: readonly Resource[];
   objects: readonly ObjectType[]; // value types: object types without @resource
   inputs: readonly InputType[]; // input types, used as custom method arguments
   enums: readonly EnumType[];
   directives: readonly DirectiveDeclaration[]; // declared foreign directives
-}
+};
 
-interface Resource {
+type Resource = {
   name: string; // 'Book'
   plural: string; // 'books' (lowerCamelCase); from @resource(plural) or pluralize
   // a @resource(plural) value must be a GraphQL name ([A-Za-z_][A-Za-z0-9_]*), else
@@ -316,17 +318,17 @@ interface Resource {
   operations: Operations;
   directives: readonly AppliedDirective[];
   source: Source;
-}
+};
 
-interface Operations {
+type Operations = {
   get: "ON" | "NONE" | "MANY";
   list: boolean;
   create: boolean;
   update: boolean;
   delete: "ON" | "NONE" | "SOFT";
-}
+};
 
-interface Field {
+type Field = {
   name: string;
   description?: string;
   type: TypeRef;
@@ -340,23 +342,23 @@ interface Field {
   number?: number; // kept for the gRPC style
   directives: readonly AppliedDirective[];
   source: Source;
-}
+};
 
-interface TypeRef {
+type TypeRef = {
   name: string;
   kind: "scalar" | "enum" | "object" | "input" | "resource";
   nonNull: boolean;
   list?: { itemNonNull: boolean };
-}
+};
 
-interface Validation {
+type Validation = {
   length?: { min?: number; max?: number };
   range?: { min?: number; max?: number };
   pattern?: string;
   format?: "EMAIL" | "URI" | "UUID";
-}
+};
 
-interface CustomMethod {
+type CustomMethod = {
   name: string; // 'archive'
   description?: string;
   target: "item" | "collection"; // item when it has an ID! argument; the first one is the item
@@ -365,22 +367,22 @@ interface CustomMethod {
   returns: TypeRef;
   directives: readonly AppliedDirective[];
   source: Source;
-}
+};
 
-interface Argument {
+type Argument = {
   name: string;
   description?: string;
   type: TypeRef;
   validation: Validation;
   directives: readonly AppliedDirective[];
   source: Source;
-}
+};
 
-interface AppliedDirective {
+type AppliedDirective = {
   name: string;
   args: Readonly<Record<string, string>>;
   source: Source;
-}
+};
 // args hold each value's SDL text, e.g. { role: '"admin"' }
 ```
 
@@ -491,20 +493,20 @@ The last five are raised by the AIP style, not core: see "AIP checks".
 ```ts
 function aipStyle(): IDesignStyle<AipDesign>;
 
-interface AipDesign {
+type AipDesign = {
   resources: readonly AipResource[]; // endpoints grouped by resource
   models: readonly Model[]; // every request and response model
   deviations: readonly Deviation[];
-}
-interface AipResource {
+};
+type AipResource = {
   name: string;
   pattern: string;
   methods: readonly AipMethod[];
   from: Resource;
-}
+};
 // pattern: 'publishers/{publisher}/books/{book}'
 
-interface AipMethod {
+type AipMethod = {
   name: string; // 'GetBook', 'ListBooks', 'ArchiveBook'
   verb: "GET" | "POST" | "PATCH" | "DELETE";
   path: string; // '/v1/publishers/{publisher}/books/{book}:archive'
@@ -514,22 +516,22 @@ interface AipMethod {
   response: { model: string } | { type: TypeRef }; // a model, or a custom method's return as written
   description?: string;
   from: Resource | CustomMethod; // the graph item it was built from
-}
+};
 
-interface Param {
+type Param = {
   name: string;
   schema: TypeRef;
   repeated: boolean;
   description?: string;
-}
+};
 
-interface Model {
+type Model = {
   name: string;
   description?: string;
   fields: readonly ModelField[]; // each ModelField keeps `from: Field | Argument`
   sdl: string;
   from: Resource | ObjectType | InputType | EnumType | CustomMethod | "builtin";
-}
+};
 ```
 
 Design values are AIP's own types, not graph or SDL types. Each one keeps the graph item it was
