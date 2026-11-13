@@ -96,10 +96,10 @@ or use. A caller's own format plugs in at `IFileFormat` through `composeTarget` 
   the AIP OpenAPI format and the `googleHttpTarget` shortcut. It imports only `@graphqall/core`, as
   the existing ESLint boundary rule requires.
 - **Dependencies** (approved by the owner): `graphql` for the lexer, parser, printer and AST;
-  `neverthrow` for `Result` (TS-01); `pluralize` and `@types/pluralize` for plurals (notation,
-  Plurals); `openapi3-ts` for the OpenAPI 3.1 document types and builder (`openapi3-ts/oas31`), so
-  the format writes no OpenAPI types of its own; and, for tests only, an OpenAPI 3.1 validator such
-  as `@seriousme/openapi-schema-validator` (R10).
+  `pluralize` and `@types/pluralize` for plurals (notation, Plurals); `openapi3-ts` for the OpenAPI
+  3.1 document types and builder (`openapi3-ts/oas31`), so the format writes no OpenAPI types of its
+  own; and, for tests only, an OpenAPI 3.1 validator such as `@seriousme/openapi-schema-validator`
+  (R10).
 
 There is no registry of targets: a target is a value the caller builds and passes in.
 
@@ -154,10 +154,12 @@ type Problem<C extends ProblemCode = ProblemCode> = {
   path?: string; // such as 'Book.publisher'
 };
 
-type Outcome<T> = {
+type Outcome<T, C extends ProblemCode = ProblemCode> = {
   value: T;
-  problems: readonly Problem[];
+  problems: readonly Problem<C>[];
+  andThen<U, D extends ProblemCode>(step: (value: T) => Outcome<U, D>): Outcome<U, C | D>;
 };
+function outcome<T>(value: T): Outcome<T, never>; // no problems yet
 
 type Source = {
   sdl: string;
@@ -166,12 +168,23 @@ type Source = {
 // sdl: the node printed with graphql's print(), which keeps descriptions and drops # comments
 ```
 
-- `Outcome` is a step's return: a value that may be partial, plus every problem found. A pipeline
-  step always succeeds with a value, so it is not a function with expected failures in TS-01 rule
-  1's sense; the functions it calls are, and they return `Result`.
-- Unit functions with expected failures return a neverthrow `Result`, typed with the codes they can
-  return (TS-01 rules 1 and 4), for example
-  `Result<IdField, Problem<'missing_id' | 'multiple_ids'>>`.
+- Every function with expected failures returns an `Outcome` (TS-01 rule 1): a value that may be
+  partial, plus every problem found, typed with the codes it can return (TS-01 rule 4), for example
+  `Outcome<IdField | undefined, 'missing_id' | 'multiple_ids'>`. A problem never stops the work, so
+  one run reports every problem.
+- `andThen` runs the next step on the value and returns that step's value with both steps' problems.
+  `render` is one chain:
+
+  ```ts
+  outcome(sdl)
+    .andThen(splitBlocks)
+    .andThen(parseBlocks)
+    .andThen(buildGraph)
+    .andThen(removeBrokenTypes) // removeTypes with the definitions buildGraph marked broken
+    .andThen(toGraph)
+    .andThen((graph) => target.run(graph));
+  ```
+
 - A code's kind, severity and message are fixed by the code, in one table in core (notation,
   Problems). Tests never assert on messages (TS-07 rule 4). `syntax_error` is the one code whose
   message varies; see step 2.
