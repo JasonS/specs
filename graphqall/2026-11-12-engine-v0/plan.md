@@ -35,16 +35,22 @@ notation is `docs/notation.md` in the graphqall repository. Read all three befor
 - Tests: Vitest, no snapshots, no `vi.mock`, no `retry` (TS-07). A failure test asserts `kind`,
   `code`, `severity`, `where` and `path`, never `message`. Expected values are written by hand from
   the notation and the spec, never copied from engine output (P-07 rule 1).
-- Prerequisite: the checks copied from naimo for P-01, P-03, P-04 and P-07 (ESLint rules, including
-  `foundation/require-test-factories`, and `pnpm mutation`) are on `main` before Task 1. This plan
-  adds no lint rule of its own.
-- Test data (P-07, TS-07): a value of a type declared in a package's `src` that a test hands to the
-  code under test is built by that type's `make<Type>(overrides)` factory in the package's
-  `tests/factories.ts`. The factory owns every default and returns a new object on each call; the
-  test overrides only the facts its case depends on. One factory per type; a task that adds a type
-  tests pass in adds its factory. Expected values are plain literals written inside `toEqual` or
-  `toMatchObject`, never in a variable or `it.each` table typed with a `src` type. SDL input stays
-  written out as text.
+- Prerequisite: before Task 1, `main` has the owner's update to P-07 and TS-07 (test factories,
+  fresh data per test, red before green, mutation testing, lint-enforced checks) and the checks
+  copied from naimo for P-01, P-03, P-04 and P-07 (ESLint rules, including
+  `foundation/require-test-factories`, and `pnpm mutation`). This plan adds no lint rule of its own.
+- Test data (P-07, TS-07, as updated): a value of a type declared in a package's `src` that a test
+  hands to the code under test is built by that type's `make<Type>(overrides)` factory in the
+  `tests/factories.ts` of the package that declares the type (see Test factories below). Other
+  packages' tests import it by relative path (`../../core/tests/factories.ts`). A nested value in an
+  override is built by its own factory too
+  (`makeResource({ fields: [makeField({ name: 'genre' })] })`). The factory owns every default and
+  returns a new object on each call; the test overrides only the facts its case depends on. One
+  factory per type; a task that adds a type tests pass in adds its factory. Expected values are
+  plain literals written inside `toEqual` or `toMatchObject`, never in a variable or `it.each` table
+  typed with a `src` type. SDL input comes from `makeResourceSdl` (Task 1), with the test passing
+  only the lines its assertions are about. Only Tasks 2 and 3, whose subject is the text's layout
+  (blank lines, comments, `\r\n`, columns), write SDL out in full.
 - After a task's tests pass, `pnpm mutation` reports every mutant on the task's changed lines as
   caught. A surviving mutant gets a test; a mutant that can't change behavior goes to the owner.
 - A defect found while building gets a failing test first, run red, then the fix.
@@ -108,6 +114,37 @@ Each task that depends on one of these names it and builds the recommended optio
    is `{ code: integer (int32), message: string, details: array of object }`, `Date` is
    `{ year, month, day }` and `TimeOfDay` is `{ hours, minutes, seconds, nanos }`, all
    `integer (int32)`.
+7. **R4 test imports core's test factories.** The spec's R4 test imports only the packages' public
+   entry points. Under the factory rule, its stub format is a fake of `IFileFormat` and must come
+   from `makeStubFormat` in core's `tests/factories.ts`. Recommendation: the R4 test imports that
+   one test factory by relative path, besides the public entry points; it imports no engine
+   internals.
+8. **Testing the rewritten `syntax_error` messages.** The notation asks for rewritten messages for
+   common graphql-js syntax errors, TS-07 rule 4 forbids asserting message text, and `pnpm mutation`
+   requires every mutant caught, so the message table's mutants in Task 3 would survive.
+   Recommendation: `parseBlocks` tests may assert the exact message of `syntax_error` for each of
+   the four rewritten graphql-js forms and the fallback, as the only exception to TS-07 rule 4.
+   Alternative: the owner accepts those mutants as approved exceptions.
+
+## Test factories
+
+Every factory takes `overrides?: Partial<T>`, owns every default, returns a new object each call and
+names its return type. The task that first needs one adds it, with a test of its defaults.
+
+| File                                    | Factories                                                                                                                                     | Added in |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `packages/core/tests/factories.ts`      | `makeSpan`, `makeResourceSdl`                                                                                                                 | 1        |
+| `packages/core/tests/factories.ts`      | `makeResource`, `makeGraph`, `makeField`, `makeTypeRef`, `makeValidation`, `makeOperations`, `makeCustomMethod`, `makeArgument`, `makeSource` | 4        |
+| `packages/core/tests/factories.ts`      | `makeStubStyle`, `makeStubFormat`, `makePassThroughTarget`, `makeOutputFile`                                                                  | 11       |
+| `packages/style-aip/tests/factories.ts` | `makeMethodChoice`                                                                                                                            | 13       |
+| `packages/style-aip/tests/factories.ts` | `makeAipMethod`, `makeParam`                                                                                                                  | 14       |
+| `packages/style-aip/tests/factories.ts` | `makeModel`, `makeModelField`                                                                                                                 | 15       |
+| `packages/style-aip/tests/factories.ts` | `makeAipResource`, `makeAipDesign`                                                                                                            | 16       |
+
+Defaults: `makeResource` is `Book` with plural `books`, an `id: ID!` field, `createdAt` and
+`updatedAt`, every operation on and no owner; `makeGraph` holds one `makeResource()`. A `Block` is
+never built by hand: tests get blocks from `splitBlocks`. Task 17 builds each mapping row's input
+with `makeTypeRef` and `makeValidation` inside the test body, not in an `it.each` table.
 
 ---
 
@@ -131,7 +168,15 @@ Each task that depends on one of these names it and builds the recommended optio
   `problem<C extends ProblemCode>(code: C, where: Span, path?: string): Problem<C>`, which fills
   `kind`, `severity` and `message` from one table keyed by code. Test factory
   `makeSpan(overrides?: Partial<Span>): Span`, default
-  `{ line: 1, column: 1, endLine: 1, endColumn: 2 }`.
+  `{ line: 1, column: 1, endLine: 1, endColumn: 2 }`. SDL factory
+  `makeResourceSdl(overrides?: { name?: string; resource?: string; fields?: readonly string[]; omit?: readonly ('id' | 'created' | 'updated')[] }): string`
+  writes one valid resource with a fixed layout, so spans stay countable by hand: line 1 is
+  `type <name> @resource<resource> {` (`name` defaults to `Book`, `resource` to no arguments, e.g.
+  `'(delete: SOFT)'`); the test's `fields` follow from line 2, one per line, indented two spaces;
+  then the required fields not in `omit`: `id: ID!`, `createdAt: DateTime! @created`,
+  `updatedAt: DateTime! @updated`; then `}`. A test needing several definitions joins calls with
+  `'\n'` and counts the later lines from there. Its own test asserts the exact text for the default
+  and for each override.
 
 - [ ] **Step 1: Add the dependencies and the runtime boundary.** Add `graphql`, `neverthrow`,
       `pluralize`, `@types/pluralize` to `@graphqall/core`. `tsconfig.src.json` extends the base
@@ -238,6 +283,8 @@ it.each(CODES)("gives %s a message", (code) => {
   - Review Focus 1: the R12 SDL and the mid-line error SDL written with `\r\n` give the same `where`
     as with `\n`; no span ends one column late because of `\r`.
   - Review Focus 5: a field below `"""Café"""` has the column you count by hand.
+  - Decision 8: each of the four rewritten graphql-js syntax error forms, and one unrecognized form,
+    gives its exact rewritten `message`.
   - A failed block with a name becomes a stub; a failed unnamed block yields only its problem.
 - [ ] **Step 2: Run them to see them fail.**
       `pnpm --filter @graphqall/core exec vitest run tests/parse-blocks.test.ts`.
@@ -306,11 +353,12 @@ it.each(CODES)("gives %s a message", (code) => {
 - [ ] **Step 5: Run them to see them pass.**
 - [ ] **Step 6: Commit** `core: prelude and resource graph`.
 
-Every check task below (5–9) has the same shape: an `it.each` table where each row is a small SDL
-snippet and the exact list of problems (kind, code, severity, `where`, `path`), with rows that pass
-giving `[]`. Run with `pnpm --filter @graphqall/core exec vitest run tests/<file>`. Each task
-commits once its table passes and `pnpm mutation` catches every mutant. Spans in the rows are
-counted by hand from the snippet.
+Every check task below (5–9) has the same shape: an `it.each` table where each row is SDL from
+`makeResourceSdl` (only the lines the row is about, or plain text for a value type) and the exact
+list of problems (kind, code, severity, `where`, `path`), with rows that pass giving `[]`. Run with
+`pnpm --filter @graphqall/core exec vitest run tests/<file>`. Each task commits once its table
+passes and `pnpm mutation` catches every mutant. Spans in the rows are counted by hand from the
+factory's fixed layout.
 
 ### Task 5: SDL validity checks
 
@@ -461,7 +509,8 @@ Test `packages/core/tests/checks/identity.test.ts`, `packages/core/tests/checks/
   problem types, `problem`, `Definition`, `Ref`, `DraftGraph`, `removeTypes`, `toGraph` and
   `graphDefinitions`, which is everything style-aip uses from core.
 
-- [ ] **Step 1: Write the failing tests** with a stub style and stub format written in the test.
+- [ ] **Step 1: Write the failing tests** with `makeStubStyle` and `makeStubFormat` (Test
+      factories).
   - `composeTarget(style, format).run(graph)` passes the style's design to the format and returns
     both steps' problems.
   - R1: `render(sdl, target)` returns `graph`, `design`, `files` and `problems`.
@@ -491,13 +540,10 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
   `resourcePattern(resource, graph): string`; `collectionPath(resource, graph): string`;
   `customMethodName(method, resource): string`;
   `aipChecks(graph): { problems: readonly Problem[]; broken: readonly string[] }`;
-  `ignoredDirectives(graph): readonly Problem[]`. Test factories in `tests/factories.ts`:
-  `makeResource(overrides?): Resource` (default: a resource `Book` with plural `books`, an `id: ID!`
-  field, `createdAt` and `updatedAt`, every operation on, no owner) and
-  `makeGraph(overrides?): ResourceGraph` (default: one `makeResource()`). Tasks 13 to 17 build every
-  resource and graph they pass to a builder, the style or the format with these, and
-  `graphFrom(sdl)` gets a graph from SDL through core's public `render` with a pass-through stub
-  target (core's `tests/support.ts` isn't exported). `package.json` has
+  `ignoredDirectives(graph): readonly Problem[]`. Tasks 13 to 17 build every graph value they pass
+  to a builder, the style or the format with core's factories (Test factories), and `graphFrom(sdl)`
+  in `tests/support.ts` gets a graph from SDL through core's public `render` with
+  `makePassThroughTarget()` (core's `tests/support.ts` isn't exported). `package.json` has
   `"name": "@graphqall/style-aip"` and `"exports": { ".": "./src/index.ts" }`.
 
 - [ ] **Step 1: Write the failing tests.**
@@ -674,8 +720,8 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
     `openapi.json` files, and the only extra problems are the three `directive_ignored` warnings.
   - R4: importing only `@graphqall/core` by package name and the style through its entry file
     `../src/index.ts` (the ESLint style boundary forbids `@graphqall/style-*` imports inside a style
-    package), `composeTarget(aipStyle(), stubFormat)` passes the AIP design to the stub and `render`
-    returns the stub's files.
+    package), `composeTarget(aipStyle(), makeStubFormat())` (Decision 7) passes the AIP design to
+    the stub and `render` returns the stub's files.
 - [ ] **Steps 3–5.** Run `pnpm check`. Commit `style-aip: Google HTTP target and examples`.
 
 ### Task 19: Problem codes in the notation (owner approval)
