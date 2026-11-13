@@ -44,7 +44,7 @@ flowchart TD
     render["render()"]
     split["splitBlocks()"]
     parse["parseBlocks()"]
-    graph["buildGraph()<br/>checks: identity, timestamps,<br/>ownership, directives, ..."]
+    build["buildGraph()<br/>checks: identity, timestamps,<br/>ownership, directives, ..."]
     prune["removeTypes()"]
     ITarget{{"ITarget&lt;D&gt;<br/>run(graph)"}}
     compose["composeTarget(style, format)"]
@@ -65,7 +65,7 @@ flowchart TD
     google["googleHttpTarget(options)"]
   end
 
-  render --> split --> parse --> graph --> prune --> ITarget
+  render --> split --> parse --> build --> prune --> ITarget
   compose -.creates.-> ITarget
   ITarget --> IDesignStyle
   ITarget --> IFileFormat
