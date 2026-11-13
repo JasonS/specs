@@ -95,10 +95,11 @@ implement or use. A caller's own format plugs in at `IFileFormat` through `compo
 - **`@graphqall/style-aip`** (new): the AIP design style, its checks, method builders and models,
   the AIP OpenAPI format and the `googleHttpTarget` shortcut. It imports only `@graphqall/core`, as
   the existing ESLint boundary rule requires.
-- **Dependencies** (need approval under `AGENTS.md` "Ask first"): `graphql` for the lexer, parser,
-  printer and AST; `neverthrow` for `Result` (TS-01); `pluralize` and `@types/pluralize` for
-  plurals (notation, Plurals); and, for tests only, an OpenAPI 3.1 validator such as
-  `@seriousme/openapi-schema-validator` (R10).
+- **Dependencies** (approved by the owner): `graphql` for the lexer, parser, printer and AST;
+  `neverthrow` for `Result` (TS-01); `pluralize` and `@types/pluralize` for plurals (notation,
+  Plurals); `openapi3-ts` for the OpenAPI 3.1 document types and builder (`openapi3-ts/oas31`), so
+  the format writes no OpenAPI types of its own; and, for tests only, an OpenAPI 3.1 validator such
+  as `@seriousme/openapi-schema-validator` (R10).
 
 There is no registry of targets: a target is a value the caller builds and passes in.
 
@@ -106,8 +107,9 @@ There is no registry of targets: a target is a value the caller builds and passe
 
 The public API is new, so nothing is incompatible. `render(sdl, target)` returns
 `{ graph, design, files, problems }` (R1). The notation needs changes that require the owner's
-approval: the problem-code list (R8), named directive arguments, and the rules listed under
-Decisions needed.
+approval: the problem-code list (R8). The other notation rules this design relies on (named
+directive arguments, `@query` and `@mutation`, unsupported definitions, reserved names) are in the
+notation.
 
 ### Decisions and tradeoffs
 
@@ -337,9 +339,9 @@ interface Validation {
 interface CustomMethod {
   name: string // 'archive'
   description?: string
-  target: 'item' | 'collection' // item when it has an ID! argument
-  readOnly: boolean
-  args: readonly Argument[] // as written, including the ID! argument
+  target: 'item' | 'collection' // item when it has an ID! argument; the first one is the item
+  kind: 'query' | 'mutation' // from @query or @mutation
+  args: readonly Argument[] // as written, including the item's ID! argument
   returns: TypeRef
   directives: readonly AppliedDirective[]
   source: Source
@@ -391,15 +393,16 @@ broken.
   loops; a chain deeper than 3 levels is a warning on each resource below the third level.
 - **Field directives:** `@length` only on `String` or lists, `@range` only on `Int` or `Float`,
   `@pattern` and `@format` only on `String`, `min` not greater than `max`; `@created`, `@updated`,
-  `@deleted`, `@owner`, `@input`, `@filterBy`, `@sortBy`, `@subset`, `@expandable`, `@number` and
-  `@customMethod` only on fields of a resource.
+  `@deleted`, `@owner`, `@input`, `@filterBy`, `@sortBy`, `@subset`, `@expandable`, `@number`,
+  `@query` and `@mutation` only on fields of a resource.
 - **References:** `@subset` and `@expandable` only on a reference; a `@subset` selection parses,
   names only fields of the target, includes its `ID!` field and contains no resource field. The
   selection is parsed with graphql's `parse` as `{ … }`; its `GraphQLError` is caught and returned
   as `subset_syntax_error`, the second targeted catch TS-01 rule 3 allows.
-- **Custom methods:** a field with arguments must be marked `@customMethod`; a custom method has
-  at most one `ID!` argument; the arguments of a `readOnly` method are scalars, enums, lists of
-  them, or input types whose fields are all scalars or enums, so they map to query parameters.
+- **Custom methods:** a field with arguments must be marked `@query` or `@mutation`, not both.
+  The first `ID!` argument makes it an item method; any other `ID!` argument is an ordinary
+  argument. The arguments of a `@query` are scalars, enums, lists of them, or input types whose
+  fields are all scalars, enums or lists of them, so they map to query parameters.
 
 A `!` field with `@input(create: NONE)` is valid: it is required in reads and absent from the
 create body.
@@ -418,8 +421,8 @@ Every code below goes into the notation's Problems section with the owner's appr
 | `duplicate_argument` | invalid_sdl | error | the second argument |
 | `duplicate_enum_value` | invalid_sdl | error | the second value |
 | `wrong_type_position` | invalid_sdl | error | the type name where it is used |
-| `multiple_id_arguments` | invalid_design | error | the second `ID!` argument |
-| `read_only_argument_not_flat` | invalid_design | error | the argument |
+| `query_argument_nested` | invalid_design | error | the argument |
+| `query_and_mutation` | invalid_sdl | error | the second directive use |
 | `unknown_type` | invalid_sdl | error | the type name where it is used |
 | `undeclared_directive` | invalid_sdl | error | the directive use |
 | `directive_wrong_location` | invalid_sdl | error | the directive use |
@@ -430,7 +433,7 @@ Every code below goes into the notation's Problems section with the owner's appr
 | `validation_wrong_type` | invalid_sdl | error | the directive use |
 | `min_greater_than_max` | invalid_sdl | error | the directive use |
 | `directive_outside_resource` | invalid_sdl | error | the directive use |
-| `arguments_without_custom_method` | invalid_sdl | error | the field |
+| `arguments_without_method_kind` | invalid_sdl | error | the field |
 | `subset_not_reference` | invalid_sdl | error | the directive use |
 | `expandable_not_reference` | invalid_sdl | error | the directive use |
 | `subset_syntax_error` | invalid_sdl | error | the selection string |
@@ -577,16 +580,16 @@ owner's pattern; a resource with no owner has none (`/v1/books`).
 | update | `PATCH /v1/{pattern}` | `UpdateBook` | query `updateMask`, body `UpdateBookBody` | `Book` |
 | delete | `DELETE /v1/{pattern}` | `DeleteBook` | path only | `Empty`, or `Book` when soft |
 | undelete | `POST /v1/{pattern}:undelete` | `UndeleteBook` | body `Empty` | `Book` |
-| custom, item | `POST /v1/{pattern}:archive` | `ArchiveBook` | body `ArchiveBookBody` | the return type |
-| custom, collection | `POST /v1/{parent}/books:search` | `SearchBooks` | body `SearchBooksBody` | the return type |
+| custom, item | `POST /v1/{pattern}:archive` (`GET` for a `@query`) | `ArchiveBook` | body `ArchiveBookBody`, or query parameters for a `@query` | the return type |
+| custom, collection | `POST /v1/{parent}/books:search` (`GET` for a `@query`) | `SearchBooks` | body `SearchBooksBody`, or query parameters for a `@query` | the return type |
 
 - A custom method's name is its own name in UpperCamelCase followed by the resource name: singular
-  (`Book`) on an item, the plural in UpperCamelCase (`Books`) on the collection. A method that
-  isn't `readOnly` has a body model named the method name plus `Body`, holding every argument
-  except the `ID!` argument, in the order written. A `readOnly` method has no body model.
+  (`Book`) on an item, the plural in UpperCamelCase (`Books`) on the collection. A `@mutation`
+  has a body model named the method name plus `Body`, holding every argument except the item's
+  `ID!` argument, in the order written. A `@query` has no body model.
 - A custom method that returns a resource responds with the resource's read model (`$ref` `Book`),
   or an array of them for a list.
-- A `readOnly` custom method uses `GET` and sends the same arguments as query parameters, under
+- A `@query` uses `GET` and sends the same arguments as query parameters, under
   Google's HTTP mapping: a list argument is a repeated parameter, and an object or input argument
   is flattened into dotted names (`query.text`).
 - A custom method gets nothing the SDL doesn't write: no paging, wrappers or extra arguments
@@ -695,21 +698,7 @@ asserts a message. `@graphqall/style-aip` gets the same `expect.hasAssertions()`
 
 ## Decisions needed
 
-1. **Rules the notation doesn't state.** The design reports these as errors:
-   `unsupported_definition` (`interface`, `union`, user scalars, `extend`, `schema`,
-   `implements`), `arguments_without_custom_method`, `directive_outside_resource`,
-   `subset_not_reference`, `expandable_not_reference`, `multiple_id_arguments`,
-   `read_only_argument_not_flat`, `model_name_taken`, `method_name_taken` and `path_taken`.
-   It also accepts `input` types as custom method arguments, which the notation's example uses but
-   doesn't define, and reserves the prelude's enum names `Off`, `GetMode`, `DeleteMode` and
-   `Format`. Recommendation: add all of them to the notation with the code list.
-2. **Limits of block splitting (R12).** A syntax error stays inside its definition only when the
-   next definition starts on its own line. Two definitions on one line form one block, and a `"""`
-   description containing a line that looks like a definition is split there. An enum value spelled
-   like a lowercase keyword (`type`, `input`, `scalar`) on its own line and followed by a name or
-   `@` also starts a block. Recommendation: accept; formatted SDL never meets the first two, and
-   enum values are uppercase by convention.
-3. **OpenAPI `info`.** OpenAPI requires a title and version, which the notation doesn't provide.
-   Recommendation: options on `aipOpenApiFormat`, as above.
-4. **Dependencies.** `graphql`, `neverthrow`, `pluralize` with `@types/pluralize`, and a dev-only
-   OpenAPI 3.1 validator. Recommendation: approve them all.
+None. The limits of block splitting (R12) are accepted: a syntax error stays inside its definition
+only when the next definition starts on its own line, so two definitions on one line form one
+block, and a `"""` description containing a line that looks like a definition is split there. An enum value spelled like a lowercase keyword (`type`, `input`, `scalar`) on
+its own line and followed by a name or `@` also starts a block.
