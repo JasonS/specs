@@ -216,10 +216,11 @@ converted with graphql's `getLocation` and then mapped. Every `where` in the eng
 this mapping.
 
 A `GraphQLError` from `parse` is caught and returned as `syntax_error`, located from the error's
-first location to the end of that line, with `path` set to the block's name when it has one. A
-block's text ends at its last character that is not whitespace or part of a comment, and an error at
-the end of that text (`<EOF>`) is located at the block's last token, so it never points into the
-next definition. Any other exception is rethrown (P-01 rule 3, TS-01 rule 3). The `syntax_error`
+first location to the end of that line, with `path` set to the block's name when it has one. When
+nothing follows the error on its line, as at the end of a block (`<EOF>`), it is located at the
+token before it, skipping comments, so it never points into the next definition. A token that
+graphql-js can't lex, such as an unfinished string, runs to the block's last character that isn't
+whitespace. Any other exception is rethrown (P-01 rule 3, TS-01 rule 3). The `syntax_error`
 message is rewritten from a table in core keyed by graphql-js's syntax error forms:
 `Expected <X>, found <Y>`, `Unterminated string`, `Unexpected character` and `Invalid number`. Any
 other syntax error keeps graphql-js's description without its `Syntax Error:` prefix.
