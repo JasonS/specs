@@ -81,18 +81,14 @@ notation is `docs/notation.md` in the graphqall repository. Read all three befor
 
 Each task that depends on one of these names it and builds the recommended option.
 
-1. **Standard method names on custom methods.** The notation says a custom method "can't take a
-   standard method's name (such as `get` or `list`)". The spec's `method_name_taken` fires only on a
-   collision with a method the design actually has, so `list` as a custom method on a resource with
-   `list: NONE` would pass. Recommendation: `method_name_taken` also fires for a custom method named
-   `get`, `batchGet`, `list`, `create`, `update`, `delete` or `undelete`, whatever the operations.
-2. **What `Model.sdl` looks like.** The spec says each model is "written as SDL" but not how.
-   Recommendation: `print` from graphql-js of an object type named after the model, with each
-   field's description, its AIP wire type (the ID field as `name`, a reference as `String` keeping
-   the field's list shape and `!` marks, so `[Author!]!` becomes `[String!]!`; `DateTime` as
-   `DateTime`; `Date` and `LocalTime` as `Date` and `TimeOfDay`), and its validation directives as
-   written. The outer `!` follows `ModelField.required`, so every field of an update body is
-   nullable in its SDL. Read-only fields carry no marker.
+1. **Standard method names on custom methods (decided: always an error, message cites AIP-136).**
+   The notation says a custom method "can't take a standard method's name (such as `get` or
+   `list`)". The spec's `method_name_taken` fires only on a collision with a method the design
+   actually has, so `list` as a custom method on a resource with `list: NONE` would pass.
+   Recommendation: `method_name_taken` also fires for a custom method named `get`, `batchGet`,
+   `list`, `create`, `update`, `delete` or `undelete`, whatever the operations.
+2. **Models as SDL (decided).** Models are data only; no `Model.sdl` and no SDL printing. SDL is
+   output only by a GraphQL style.
 3. **Built-in models.** The spec lists `Empty`, `Status`, `Date` and `TimeOfDay` as generated models
    but not when they appear. Recommendation: all four are always in `design.models` and in
    `components.schemas`, so every file has the same base.
@@ -612,13 +608,12 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
 
 ### Task 15: Models
 
-**Files:** Create `src/models.ts`, `src/model-sdl.ts`. Test `tests/models.test.ts`.
+**Files:** Create `src/models.ts`. Test `tests/models.test.ts`.
 
 **Interfaces:**
 
 - Produces: `buildModels(resource, graph): readonly Model[]`; `valueModels(graph): readonly Model[]`
-  (objects, inputs, enums); `BUILTIN_MODELS: readonly Model[]` (Decision 3);
-  `modelSdl(model): string` (Decision 2).
+  (objects, inputs, enums); `BUILTIN_MODELS: readonly Model[]` (Decision 3).
 
 - [ ] **Step 1: Write the failing tests.**
   - R9 every `@input` combination and `!` on create and update, using `Book` from the notation: read
@@ -637,7 +632,6 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
   - References: `author: Author!` is a required string field; `authors: [Author!]!` a list of
     strings.
   - Value types, inputs and enums become models under their own names; built-ins are always present.
-  - `modelSdl` of `CreateBookBody` equals a hand-written SDL string per Decision 2.
 - [ ] **Steps 2–5.** Commit `style-aip: models`.
 
 ### Task 16: `aipStyle()`

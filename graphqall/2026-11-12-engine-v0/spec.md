@@ -533,15 +533,13 @@ type Model = {
   name: string;
   description?: string;
   fields: readonly ModelField[]; // each ModelField keeps `from: Field | Argument`
-  sdl: string;
   from: Resource | ObjectType | InputType | EnumType | CustomMethod | "builtin";
 };
 ```
 
 Design values are AIP's own types, not graph or SDL types. Each one keeps the graph item it was
 built from (`from`), so any endpoint or model can be traced through that item's `source` to the SDL
-that produced it. `Model.sdl` is the model written as SDL (notation, Engine outputs), produced by a
-plain function from the model's fields.
+that produced it.
 
 `deviations` is empty in v0. The notation defines a deviation as an override of a style convention,
 and overrides are deferred; turning an operation off is not a deviation.
