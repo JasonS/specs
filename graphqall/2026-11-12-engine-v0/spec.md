@@ -351,7 +351,8 @@ type Field = {
 
 type TypeRef = {
   name: string;
-  kind: "scalar" | "enum" | "object" | "input" | "resource";
+  // "unknown": a definition that failed to parse; step 4 removes every node that uses one.
+  kind: "scalar" | "enum" | "object" | "input" | "resource" | "unknown";
   nonNull: boolean;
   list?: { itemNonNull: boolean };
 };
