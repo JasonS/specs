@@ -718,7 +718,8 @@ asserts a message. `@graphqall/style-aip` gets the same `expect.hasAssertions()`
    next definition starts on its own line. Two definitions on one line form one block, and a `"""`
    description containing a line that looks like a definition is split there. An enum value spelled
    like a lowercase keyword (`type`, `input`, `scalar`) on its own line and followed by a name or
-   `@` also starts a block. Recommendation: accept; formatted SDL never meets the first two, and enum values are uppercase by convention.
+   `@` also starts a block. Recommendation: accept; formatted SDL never meets the first two, and
+   enum values are uppercase by convention.
 5. **OpenAPI `info`.** OpenAPI requires a title and version, which the notation doesn't provide.
    Recommendation: options on `aipOpenApiFormat`, as above.
 6. **Dependencies.** `graphql`, `neverthrow`, `pluralize` with `@types/pluralize`, and a dev-only
