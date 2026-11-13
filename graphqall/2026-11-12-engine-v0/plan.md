@@ -67,8 +67,8 @@ notation is `docs/notation.md` in the graphqall repository. Read all three befor
 1. **Windows line endings.** SDL with `\r\n` gives the same spans as the same SDL with `\n` (Task 2,
    Task 3).
 2. **Empty and comment-only input.** `render('')` and `render('# notes\n')` return an empty graph,
-   an empty design (built-in models only, Decision 3), no problems, and an `openapi.json` with
-   `"paths": {}` (Task 11, Task 18).
+   an empty design (no models, Decision 3), no problems, and an `openapi.json` with `"paths": {}`
+   (Task 11, Task 18).
 3. **A resource with every operation off.**
    `@resource(get: NONE, list: NONE, create: NONE, update: NONE, delete: NONE)` builds, has no
    methods and keeps its read model (Task 13, Task 15).
@@ -89,9 +89,11 @@ Each task that depends on one of these names it and builds the recommended optio
    `list`, `create`, `update`, `delete` or `undelete`, whatever the operations.
 2. **Models as SDL (decided).** Models are data only; no `Model.sdl` and no SDL printing. SDL is
    output only by a GraphQL style.
-3. **Built-in models.** The spec lists `Empty`, `Status`, `Date` and `TimeOfDay` as generated models
-   but not when they appear. Recommendation: all four are always in `design.models` and in
-   `components.schemas`, so every file has the same base.
+3. **Built-in models (decided: only when used).** `Empty`, `Status`, `Date` and `TimeOfDay` are in
+   `design.models` and `components.schemas` only when something references them. Every operation's
+   `default` response is `Status`, so `Status` is present whenever there is an operation; `Empty`
+   when a method returns it; `Date` and `TimeOfDay` when a field has that type. Their names stay
+   reserved either way (`model_name_taken`).
 4. **Wording of the `filter` and `orderBy` descriptions.** The spec says they list the fields.
    Recommendation: `Fields you can filter by: title, genre.` and
    `Fields you can sort by: title, createdAt.`, fields in declaration order. The list builder puts
@@ -631,7 +633,9 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
   - Review Focus 3: a resource with every operation off has only its read model.
   - References: `author: Author!` is a required string field; `authors: [Author!]!` a list of
     strings.
-  - Value types, inputs and enums become models under their own names; built-ins are always present.
+  - Value types, inputs and enums become models under their own names; a built-in is present only
+    when referenced: no `Date` schema without a `Date` field, `Empty` only with a method that
+    returns it, `Status` with any operation (Decision 3).
 - [ ] **Steps 2–5.** Commit `style-aip: models`.
 
 ### Task 16: `aipStyle()`
