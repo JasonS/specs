@@ -172,6 +172,10 @@ type Source = {
 - Unit functions with expected failures return a neverthrow `Result`, typed with the codes they can
   return (TS-01 rules 1 and 4), for example
   `Result<IdField, Problem<'missing_id' | 'multiple_ids'>>`.
+- A definition's independent checks are combined with neverthrow's `Result.combineWithAllErrors`, so
+  every problem in a definition is reported, not only the first. A check that needs another's value
+  follows it with `andThen`, which stops at the first error: a `@subset` selection that doesn't
+  parse is not checked for unknown fields.
 - A code's kind, severity and message are fixed by the code, in one table in core (notation,
   Problems). Tests never assert on messages (TS-07 rule 4). `syntax_error` is the one code whose
   message varies; see step 2.
