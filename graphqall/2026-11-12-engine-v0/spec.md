@@ -695,18 +695,7 @@ asserts a message. `@graphqall/style-aip` gets the same `expect.hasAssertions()`
 
 ## Decisions needed
 
-1. **Named directive arguments.** GraphQL has no positional arguments, so the notation's
-   `@pattern("^[0-9]{13}$")`, `@format(EMAIL)`, `@subset("{ id name }")` and `@number(n)` don't
-   parse, including in the notation's own example. Options: name the arguments
-   (`@pattern(regex: "…")`, `@format(as: EMAIL)`, `@subset(fields: "{ id name }")`,
-   `@number(value: 3)`), or have the engine rewrite positional arguments before parsing.
-   Recommendation: name them; a rewrite is hidden behavior and breaks every other SDL tool.
-2. **A data field named `name` under AIP.** AIP renders the ID field as `name`, so another field
-   called `name` collides with it. The notation's own example has `Author.name`. Options: an error
-   that removes the resource (`field_name_reserved`, as designed), with the example changed to
-   `displayName`; or a warning plus a deviation that renames the field. Recommendation: the error;
-   the engine never renames user fields.
-3. **Rules the notation doesn't state.** The design reports these as errors:
+1. **Rules the notation doesn't state.** The design reports these as errors:
    `unsupported_definition` (`interface`, `union`, user scalars, `extend`, `schema`,
    `implements`), `arguments_without_custom_method`, `directive_outside_resource`,
    `subset_not_reference`, `expandable_not_reference`, `multiple_id_arguments`,
@@ -714,13 +703,13 @@ asserts a message. `@graphqall/style-aip` gets the same `expect.hasAssertions()`
    It also accepts `input` types as custom method arguments, which the notation's example uses but
    doesn't define, and reserves the prelude's enum names `Off`, `GetMode`, `DeleteMode` and
    `Format`. Recommendation: add all of them to the notation with the code list.
-4. **Limits of block splitting (R12).** A syntax error stays inside its definition only when the
+2. **Limits of block splitting (R12).** A syntax error stays inside its definition only when the
    next definition starts on its own line. Two definitions on one line form one block, and a `"""`
    description containing a line that looks like a definition is split there. An enum value spelled
    like a lowercase keyword (`type`, `input`, `scalar`) on its own line and followed by a name or
    `@` also starts a block. Recommendation: accept; formatted SDL never meets the first two, and
    enum values are uppercase by convention.
-5. **OpenAPI `info`.** OpenAPI requires a title and version, which the notation doesn't provide.
+3. **OpenAPI `info`.** OpenAPI requires a title and version, which the notation doesn't provide.
    Recommendation: options on `aipOpenApiFormat`, as above.
-6. **Dependencies.** `graphql`, `neverthrow`, `pluralize` with `@types/pluralize`, and a dev-only
+4. **Dependencies.** `graphql`, `neverthrow`, `pluralize` with `@types/pluralize`, and a dev-only
    OpenAPI 3.1 validator. Recommendation: approve them all.
