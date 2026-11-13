@@ -94,29 +94,30 @@ Each task that depends on one of these names it and builds the recommended optio
    `default` response is `Status`, so `Status` is present whenever there is an operation; `Empty`
    when a method returns it; `Date` and `TimeOfDay` when a field has that type. Their names stay
    reserved either way (`model_name_taken`).
-4. **Wording of the `filter` and `orderBy` descriptions (decided: as recommended).** The spec says they list the fields.
-   Recommendation: `Fields you can filter by: title, genre.` and
+4. **Wording of the `filter` and `orderBy` descriptions (decided: as recommended).** The spec says
+   they list the fields. Recommendation: `Fields you can filter by: title, genre.` and
    `Fields you can sort by: title, createdAt.`, fields in declaration order. The list builder puts
    them in `Param.description`, so the format only copies them.
-5. **Request and response models when an operation is off.** The spec lists `Create<Name>Body`,
-   `Update<Name>Body`, `List<Plural>Response` and `BatchGet<Plural>Response` for each resource
-   without saying whether they exist when their method doesn't. Recommendation: a request or
-   response model exists only when its method does; the read model always exists. The names stay
-   reserved either way (`model_name_taken`).
-6. **Model fields with no graph source.** The spec says each `ModelField` keeps
-   `from: Field | Argument`, but the list and batch-get responses (`books`, `nextPageToken`) and the
-   built-in models' fields come from no graph field. Recommendation: `from?: Field | Argument`,
-   absent on generated and built-in fields. Only graph `Field`s of resource kind become `String`; a
-   generated response field such as `ListBooksResponse.books` keeps the resource kind, so the format
-   writes `$ref Book`. The built-in schemas are written by `modelSchema` from fixed values: `Status`
-   is `{ code: integer (int32), message: string, details: array of object }`, `Date` is
+5. **Request and response models when an operation is off (decided: only when the method exists).**
+   The spec lists `Create<Name>Body`, `Update<Name>Body`, `List<Plural>Response` and
+   `BatchGet<Plural>Response` for each resource without saying whether they exist when their method
+   doesn't. Recommendation: a request or response model exists only when its method does; the read
+   model always exists. The names stay reserved either way (`model_name_taken`).
+6. **Model fields with no graph source (settled as recommended; implementation detail).** The spec
+   says each `ModelField` keeps `from: Field | Argument`, but the list and batch-get responses
+   (`books`, `nextPageToken`) and the built-in models' fields come from no graph field.
+   Recommendation: `from?: Field | Argument`, absent on generated and built-in fields. Only graph
+   `Field`s of resource kind become `String`; a generated response field such as
+   `ListBooksResponse.books` keeps the resource kind, so the format writes `$ref Book`. The built-in
+   schemas are written by `modelSchema` from fixed values: `Status` is
+   `{ code: integer (int32), message: string, details: array of object }`, `Date` is
    `{ year, month, day }` and `TimeOfDay` is `{ hours, minutes, seconds, nanos }`, all
    `integer (int32)`.
-7. **R4 test imports core's test factories.** The spec's R4 test imports only the packages' public
-   entry points. Under the factory rule, its stub format is a fake of `IFileFormat` and must come
-   from `makeStubFormat` in core's `tests/factories.ts`. Recommendation: the R4 test imports that
-   one test factory by relative path, besides the public entry points; it imports no engine
-   internals.
+7. **R4 test imports core's test factories (settled as recommended; implementation detail).** The
+   spec's R4 test imports only the packages' public entry points. Under the factory rule, its stub
+   format is a fake of `IFileFormat` and must come from `makeStubFormat` in core's
+   `tests/factories.ts`. Recommendation: the R4 test imports that one test factory by relative path,
+   besides the public entry points; it imports no engine internals.
 8. **Testing the rewritten `syntax_error` messages.** The notation asks for rewritten messages for
    common graphql-js syntax errors, TS-07 rule 4 forbids asserting message text, and `pnpm mutation`
    requires every mutant caught, so the message table's mutants in Task 3 would survive.
