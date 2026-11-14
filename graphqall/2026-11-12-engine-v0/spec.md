@@ -495,12 +495,13 @@ Every code below goes into the notation's Problems section with the owner's appr
 | `ownership_too_deep`            | invalid_design | warning  | the `@owner` field of each resource below the third level |
 | `depends_on_invalid_type`       | invalid_design | error    | the first reference to the removed type                   |
 | `field_name_reserved`           | invalid_design | error    | the field (AIP style)                                     |
-| `model_name_taken`              | invalid_design | error    | the user type's name (AIP style)                          |
+| `model_name_taken`              | invalid_design | error    | the user type's definition (AIP style)                    |
 | `method_name_taken`             | invalid_design | error    | the custom method (AIP style)                             |
-| `path_taken`                    | invalid_design | error    | the second resource's type name (AIP style)               |
+| `path_taken`                    | invalid_design | error    | the second resource's definition (AIP style)              |
 | `directive_ignored`             | invalid_design | warning  | the directive use (AIP style)                             |
 
-The last five are raised by the AIP style, not core: see "AIP checks".
+The last five are raised by the AIP style, not core: see "AIP checks". The style sees only the
+graph, which keeps one span per node, so a type's problem covers its whole definition.
 
 ### AIP design style (`@graphqall/style-aip`)
 
@@ -566,13 +567,15 @@ Plain functions over the graph:
   uses for the resource name. The resource is broken.
 - **`model_name_taken`**: a user type has the same name as a generated model (see Models), such as a
   value type named `Status` or `TimeOfDay`. The user type is broken.
-- **`method_name_taken`**: a custom method's generated name, or its body model's name, equals any
-  other method or model name in the design: a custom method `get` on `Book` (`GetBook`), or
-  `createBook` on `Shelf` (`CreateBookShelf`) beside a resource `BookShelf`. The resource with the
-  custom method is broken.
-- **`path_taken`**: two resources have the same collection path, meaning the pattern with parameter
-  names ignored (the owner chain's collections plus the resource's plural), such as two resources
-  with the same plural and owner. The second, in source order, is broken.
+- **`method_name_taken`**: a custom method is named like a standard method (`get`, `batchGet`,
+  `list`, `create`, `update`, `delete`, `undelete`), or its generated name equals another method's:
+  any resource's standard method name, whether or not that method is on, or another custom method's.
+  Examples: `get` on `Book`, or `createBook` on `Shelf` (`CreateBookShelf`) beside a resource
+  `BookShelf`. A body model's name is its method's name plus `Body`, so it collides only when the
+  method's name does. Each resource with a colliding custom method is broken.
+- **`path_taken`**: two resources have the same plural, under any owners. AIP names the list and
+  batch-get methods and their models by the plural alone (`ListBooks`, `ListBooksResponse`), so the
+  same plural under different owners would give two of each. The second, in source order, is broken.
 - **`ignoredDirectives`**: one `directive_ignored` warning for each `@subset`, `@expandable`,
   `@number` and foreign directive anywhere in the graph (R6, R7). The design is the same with or
   without them.
