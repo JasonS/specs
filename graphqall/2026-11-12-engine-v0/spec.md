@@ -535,8 +535,9 @@ type AipMethod = {
 
 type Param = {
   name: string;
-  schema: TypeRef;
+  schema: TypeRef; // the type, or its items' when repeated; nonNull means the parameter is required
   repeated: boolean;
+  validation: Validation; // from the argument or field it carries
   description?: string;
 };
 
