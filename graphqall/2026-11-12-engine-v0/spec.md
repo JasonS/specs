@@ -500,7 +500,7 @@ Every code below goes into the notation's Problems section with the owner's appr
 | `path_taken`                    | invalid_design | error    | the second resource's definition (AIP style)              |
 | `directive_ignored`             | invalid_design | warning  | the directive use (AIP style)                             |
 
-The last five are raised by the AIP style, not core: see "AIP checks". The style sees only the
+The last five are raised by the AIP style, not core, which also raises `query_argument_nested`: see "AIP checks". The style sees only the
 graph, which keeps one span per node, so a type's problem covers its whole definition.
 
 ### AIP design style (`@graphqall/style-aip`)
@@ -577,6 +577,10 @@ Plain functions over the graph:
 - **`path_taken`**: two resources have the same plural, under any owners. AIP names the list and
   batch-get methods and their models by the plural alone (`ListBooks`, `ListBooksResponse`), so the
   same plural under different owners would give two of each. The second, in source order, is broken.
+- **`query_argument_nested`**: a `@query` argument, or a field of its input argument, is a list of
+  `Date` or `LocalTime`. Under AIP each is a message (`google.type.Date`, `TimeOfDay`), and Google's
+  HTTP mapping has no query parameters for a repeated message, so this is the nested input that
+  core's check of the same code rejects. Located at the argument; the resource is broken.
 - **`ignoredDirectives`**: one `directive_ignored` warning for each `@subset`, `@expandable`,
   `@number` and foreign directive anywhere in the graph (R6, R7). The design is the same with or
   without them.
@@ -649,7 +653,8 @@ pattern; a resource with no owner has none (`/v1/books`).
   or an array of them for a list.
 - A `@query` uses `GET` and sends the same arguments as query parameters, under Google's HTTP
   mapping: a list argument is a repeated parameter, and an object or input argument is flattened
-  into dotted names (`query.text`).
+  into dotted names (`query.text`). A `Date` or `LocalTime` is a message, so it is flattened into
+  its int32 fields the same way (`on.year`, `on.month`, `on.day`), each required when the value is.
 - A custom method gets nothing the SDL doesn't write: no paging, wrappers or extra arguments
   (notation, Custom methods).
 
@@ -739,7 +744,7 @@ asserts a message. `@graphqall/style-aip` gets the same `expect.hasAssertions()`
   description before a definition, and an unterminated `"` and `"""` string followed by a valid
   definition.
 - **AIP checks:** one table per check, covering `field_name_reserved`, `model_name_taken`,
-  `method_name_taken`, `path_taken` and `directive_ignored`, with the exact problems and the
+  `method_name_taken`, `path_taken`, `query_argument_nested` and `directive_ignored`, with the exact problems and the
   resources left in the design.
 - **Method builders:** each builder alone, with a resource built by a test factory, asserting the
   whole `AipMethod`. `chooseMethods` gets its own table: every `@resource` argument and value maps
