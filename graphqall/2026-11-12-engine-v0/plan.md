@@ -616,8 +616,9 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
 
 **Interfaces:**
 
-- Produces: `buildModels(resource, graph): readonly Model[]`; `valueModels(graph): readonly Model[]`
-  (objects, inputs, enums); `BUILTIN_MODELS: readonly Model[]` (Decision 3).
+- Produces: `buildModels(resource): readonly Model[]`; `valueModels(graph): readonly Model[]`
+  (objects, inputs, enums); `builtinModels(methods, models): readonly Model[]`, the built-ins the
+  design uses (Decision 3).
 
 - [ ] **Step 1: Write the failing tests.**
   - R9 every `@input` combination and `!` on create and update, using `Book` from the notation: read
