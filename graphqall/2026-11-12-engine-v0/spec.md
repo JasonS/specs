@@ -713,6 +713,8 @@ name; each model is a schema under `components.schemas`. Every operation has a `
 | description          | `description` on the schema, property or parameter                                          |
 
 - `updateMask` is a `string` query parameter (a comma-separated field mask in proto3 JSON).
+- An operation with no parameters, such as a top-level create, has no `parameters` key, as a schema
+  with no required fields has no `required`.
 - The `filter` parameter's description lists the fields that can be filtered, and `orderBy`'s the
   fields that can be sorted, so the per-field settings are visible in the file.
 
