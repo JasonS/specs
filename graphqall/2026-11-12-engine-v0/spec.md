@@ -455,6 +455,7 @@ Every code below goes into the notation's Problems section with the owner's appr
 | `query_argument_nested`         | invalid_design | error    | the argument                                              |
 | `query_and_mutation`            | invalid_sdl    | error    | the second directive use                                  |
 | `unknown_type`                  | invalid_sdl    | error    | the type name where it is used                            |
+| `nested_list`                   | invalid_sdl    | error    | the inner list type                                       |
 | `undeclared_directive`          | invalid_sdl    | error    | the directive use                                         |
 | `directive_wrong_location`      | invalid_sdl    | error    | the directive use                                         |
 | `directive_repeated`            | invalid_sdl    | error    | the second use                                            |
