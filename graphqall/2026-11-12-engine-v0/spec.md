@@ -226,7 +226,8 @@ message is rewritten from a table in core keyed by graphql-js's syntax error for
 other syntax error keeps graphql-js's description without its `Syntax Error:` prefix.
 
 A block that fails to parse but has a `keyword` and `name` is kept as a **stub**: a named, empty
-definition marked broken. A failed block with no name is dropped after its problem is reported.
+definition marked broken. A failed block with no name, or one starting with `extend`, which defines
+nothing, is dropped after its problem is reported.
 
 #### 3. `buildGraph(parsed): Outcome<DraftGraph>`
 
