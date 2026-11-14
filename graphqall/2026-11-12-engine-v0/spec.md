@@ -421,6 +421,7 @@ Each rule below is one function over one definition or field. An error marks the
 - **Timestamps:** exactly one `@created` and one `@updated`, each `DateTime!`; `@updated` optional
   when `update: NONE`; with `delete: SOFT`, exactly one `@deleted` of type `DateTime`; `@deleted`
   without `delete: SOFT`.
+- **Markers:** a field has at most one of `@created`, `@updated`, `@deleted` and `@owner`.
 - **Ownership:** at most one `@owner`; the owner's type is a non-null resource, not a list; no
   loops; a chain deeper than 3 levels is a warning on each resource below the third level.
 - **Field directives:** `@length` only on `String` or lists, `@range` only on `Int` or `Float`,
@@ -455,6 +456,7 @@ Every code below goes into the notation's Problems section with the owner's appr
 | `wrong_type_position`           | invalid_sdl    | error    | the type name where it is used                            |
 | `query_argument_nested`         | invalid_design | error    | the argument                                              |
 | `query_and_mutation`            | invalid_sdl    | error    | the second directive use                                  |
+| `conflicting_markers`           | invalid_sdl    | error    | each marker after the first                               |
 | `unknown_type`                  | invalid_sdl    | error    | the type name where it is used                            |
 | `nested_list`                   | invalid_sdl    | error    | the inner list type                                       |
 | `undeclared_directive`          | invalid_sdl    | error    | the directive use                                         |
