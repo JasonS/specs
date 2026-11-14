@@ -431,7 +431,11 @@ Each rule below is one function over one definition or field. An error marks the
 - **References:** `@subset` and `@expandable` only on a reference; a `@subset` selection parses,
   names only fields of the target, includes its `ID!` field and contains no resource field. The
   selection is parsed with graphql's `parse` as `{ … }`; its `GraphQLError` is caught and returned
-  as `subset_syntax_error`, the second targeted catch TS-01 rule 3 allows.
+  as `subset_syntax_error`, the second targeted catch TS-01 rule 3 allows. Anything but `{ … }` with
+  plain field names (an operation keyword, a fragment, an alias, an argument, a directive or an
+  empty selection) is also `subset_syntax_error`. A name selected twice is kept once, and each code
+  is reported once per selection. The ID check is skipped when the target doesn't have exactly one
+  `ID!` field, which is already `missing_id` or `multiple_ids`.
 - **Custom methods:** a field with arguments must be marked `@query` or `@mutation`, not both. The
   first `ID!` argument makes it an item method; any other `ID!` argument is an ordinary argument.
   The arguments of a `@query` are scalars, enums, lists of them, or input types whose fields are all
