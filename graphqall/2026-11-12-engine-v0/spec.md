@@ -250,7 +250,7 @@ written (their SDL text) for a later GraphQL format (R7).
 
 `DraftGraph` is a list of `Definition` entries:
 `{ name; kind; broken: boolean; refs: readonly Ref[]; value?: GraphNode }`, where
-`Ref { name; where: Span; path: string }` is one named use of another definition and `value` is the
+`Ref { name; directive: boolean; where: Span; path: string }` is one named use of another definition (`directive` because types and directives have separate names) and `value` is the
 built node, present only when the definition is not broken. Nodes refer to other definitions by
 name, so a valid node can name a broken one until step 4 removes it.
 
