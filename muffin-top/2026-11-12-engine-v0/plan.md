@@ -16,7 +16,7 @@ plus problems). Method builders come from a factory keyed by a tagged `MethodCho
 **Tech Stack:** TypeScript 6, Node 26, pnpm 12 workspace, Vitest 5, `graphql`, `neverthrow`,
 `pluralize`, `openapi3-ts`, `@seriousme/openapi-schema-validator` (tests only).
 
-**Spec:** `../specs/graphqall/2026-11-12-engine-v0/spec.md`, with `requirements.md` beside it. The
+**Spec:** `../specs/muffin-top/2026-11-12-engine-v0/spec.md`, with `requirements.md` beside it. The
 notation is `docs/notation.md` in the graphqall repository. Read all three before any task.
 
 ## Global Constraints
