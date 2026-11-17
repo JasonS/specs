@@ -173,10 +173,10 @@ Reserved names change: AIP adds `ErrorInfo` and `BadRequest`; GraphQL drops `Use
 
 ## Engine
 
-- Core exports `type ErrorCode` and gives each method its codes: `standardMethodOf` returns
-  `errors`, decided from the resource as above; `CustomMethod` gains `errors`, as written.
-- Each output's method type carries `errors: readonly ErrorCode[]` and renders them. No output
-  decides which errors a method has.
+- Core exports `type ErrorCode`, `standardErrorsOf(method, resource)`, decided from the resource as
+  above, and `customErrorsOf(method)`, as `@errors` lists them.
+- Each output's method type gains `errors: readonly ErrorCode[]`, filled from those two, in that
+  output's own pull request, and renders them. No output decides which errors a method has.
 - The status table lives in `@muffin-top/openapi`, which names no output; outputs pass their
   overrides.
 
@@ -185,8 +185,8 @@ Reserved names change: AIP adds `ErrorInfo` and `BadRequest`; GraphQL drops `Use
 Each its own pull request and review. Corpus expectations are written by hand from each standard,
 never copied from engine output.
 
-1. Notation and core: `ErrorCode`, `@errors`, `core/errors`, codes on every method; notation.md.
-   Outputs render as before.
+1. Notation and core: `ErrorCode`, `@errors`, `core/errors`, `standardErrorsOf` and
+   `customErrorsOf`; notation.md. Outputs render as before.
 2. The shared status table, AIP over HTTP and gRPC.
 3. REST.
 4. JSON:API.
