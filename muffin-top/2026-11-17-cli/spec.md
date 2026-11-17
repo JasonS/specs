@@ -31,8 +31,10 @@ muffin-top --version
   gives it (`api/openapi.json`, `proto/library_api/v1/library_api.proto`).
 - Without `--out`, the file is printed to standard output, so it can be piped into a generator. An
   output that makes more than one file needs `--out`.
-- `--check` writes nothing and fails when a file under `--out` is missing or differs from what
-  `generate` would write, as `graphql-codegen --check` and `prettier --check` do. It needs `--out`.
+- `--check` writes and prints no file. It fails on errors in the schema, and, with `--out`, when a
+  file there is missing (`api/openapi.json is missing. Run generate.`) or differs from what
+  `generate` would write (`api/openapi.json is out of date. Run generate.`), as
+  `graphql-codegen --check` and `prettier --check` do. Without `--out` it only checks the schema.
 - Every problem prints to standard error, so a pipe carries only the file. A problem shows its
   severity, message and rule code, then a code frame at its span in the schema, then the standard's
   link when the rule has one and the title of each quick fix it offers.
@@ -75,7 +77,7 @@ prints it and exits 1.
 
 Written from this spec against `ICli` with a fake engine and fake files: each exit code, problems
 on standard error and the file on standard output, nothing written on an error, `--check` passing,
-failing on a missing file and on a changed file, and every usage error. The code frame and help get
+failing on a missing file and on a changed file, and checking only the schema without `--out`, and every usage error. The code frame and help get
 tests of their text. One test runs the real engine on the Book example.
 
 ## Later
