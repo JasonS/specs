@@ -16,11 +16,12 @@ way people and CI do, by running it and reading what it prints.
 
 ## Decision
 
-One package, `@muffin-top/cli`, with one command, modeled on openapi-generator, protoc and
-GraphQL Code Generator. Arguments come first; there is no config file.
+One package, `@muffin-top/cli`, with two commands, modeled on openapi-generator, protoc and ESLint.
+Arguments come first; there is no config file.
 
 ```text
-muffin-top generate <schema> --to <output> [--out <folder>] [--format json|yaml] [--casing <casing>] [--check]
+muffin-top generate <schema> --to <output> [--out <folder>] [--format json|yaml] [--casing <casing>]
+muffin-top check <schema> --to <output>
 muffin-top --help
 muffin-top --version
 ```
@@ -31,17 +32,16 @@ muffin-top --version
   gives it (`api/openapi.json`, `proto/library_api/v1/library_api.proto`).
 - Without `--out`, the file is printed to standard output, so it can be piped into a generator. An
   output that makes more than one file needs `--out`.
-- `--check` writes and prints no file. It fails on errors in the schema, and, with `--out`, when a
-  file there is missing (`api/openapi.json is missing. Run generate.`) or differs from what
-  `generate` would write (`api/openapi.json is out of date. Run generate.`), as
-  `graphql-codegen --check` and `prettier --check` do. Without `--out` it only checks the schema.
+- `check` reports the schema's problems under that output's rules and never reads or writes a
+  contract file. It takes `--to` because each standard warns about different things.
+- CI that keeps the contract committed runs `generate` and then `git diff --exit-code`, so a
+  stale file fails the build with the diff in its log. The docs give this recipe.
 - Every problem prints to standard error, so a pipe carries only the file. A problem shows its
   severity, message and rule code, then a code frame at its span in the schema, then the standard's
   link when the rule has one and the title of each quick fix it offers.
 - An error in the schema writes and prints no file. The file is all or nothing, so a code generator
   never reads a design with types removed.
-- Exit codes follow ESLint's: 0 when it worked (warnings allowed), 1 for errors in the schema or
-  stale files under `--check`, 2 for a usage mistake, such as an unknown output or a schema file that
+- Exit codes follow ESLint's: 0 when it worked (warnings allowed), 1 for errors in the schema, 2 for a usage mistake, such as an unknown output or a schema file that
   can't be read.
 - `--help` lists the commands, the outputs (from the engine, never a copy), the options and
   examples. It is plain text in the terminal; nothing opens a web page.
@@ -60,10 +60,10 @@ is the CLI's own, because `@babel/code-frame` highlights JavaScript, not GraphQL
 
 - `main.ts`, the composition root and the `bin`: makes the engine, the file reader and writer and
   the CLI, runs it with `process.argv`, and sets `process.exitCode`.
-- `parseCommand(args, outputs)`: a function from the arguments to a `Command` (help, version or
-  generate) or a usage error naming what is wrong.
+- `parseCommand(args, outputs)`: a function from the arguments to a `Command` (help, version,
+  generate or check) or a usage error naming what is wrong.
 - `ICli` with `run(args): Promise<ExitCode>`: reads the schema, renders it, prints problems, and
-  writes, prints or checks the files. It takes `IEngine`, a file reader, a file writer and the two
+  writes or prints the files. It takes `IEngine`, a file reader, a file writer and the two
   streams through its constructor.
 - `IFileReader` and `IFileWriter`, implemented over `node:fs/promises`: reading returns a
   `Result` whose error is a file that can't be read; writing makes the folders it needs.
@@ -76,9 +76,8 @@ prints it and exits 1.
 ### Tests
 
 Written from this spec against `ICli` with a fake engine and fake files: each exit code, problems
-on standard error and the file on standard output, nothing written on an error, `--check` passing,
-failing on a missing file and on a changed file, and checking only the schema without `--out`, and
-every usage error. The code frame and help get tests of their text. One test runs the real engine on the Book example.
+on standard error and the file on standard output, nothing written on an error, `check`
+passing and failing, and every usage error. The code frame and help get tests of their text. One test runs the real engine on the Book example.
 
 ## Later
 
@@ -93,8 +92,8 @@ every usage error. The code frame and help get tests of their text. One test run
 
 ## Sources
 
-- GraphQL Code Generator, `--check`: <https://the-guild.dev/graphql/codegen/docs/getting-started/development-workflow>
-- Prettier CLI, `--check`: <https://prettier.io/docs/cli#--check>
+- openapi-generator CLI, `generate -i -g -o`: <https://openapi-generator.tech/docs/usage>
+- git diff `--exit-code`: <https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---exit-code>
 - ESLint CLI exit codes: <https://eslint.org/docs/latest/use/command-line-interface#exit-codes>
 - Node.js `util.parseArgs` and `util.styleText`: <https://nodejs.org/api/util.html>
 - NO_COLOR: <https://no-color.org/>
