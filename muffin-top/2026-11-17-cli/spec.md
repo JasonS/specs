@@ -68,7 +68,7 @@ is the CLI's own, because `@babel/code-frame` highlights JavaScript, not GraphQL
   `process.argv`, and sets `process.exitCode`.
 - `parseCommand(args, outputs)`: a function from the arguments to a `Command` (help, version,
   generate or check) or a `CliError` naming what is wrong.
-- `ICli.run(args): Promise<ExitCode>`: parses, prints help or the version, or hands generate and
+- `ICli.run(argv): Promise<ExitCode>`, with `argv` as `process.argv`: parses, prints help or the version, or hands generate and
   check to the runner, and prints any `CliError`. It takes the engine's outputs, the runner and the
   two streams.
 - `ISchemaRunner.run(command)`: reads the schema, renders it, reports the problems and, for
