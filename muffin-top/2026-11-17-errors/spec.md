@@ -113,31 +113,31 @@ Error Objects: "an application-specific error code"). `INVALID_ARGUMENT` is 422 
 and 400 on query parameters (JSON:API 1.1, Creating Resources; Query Parameters). A body field's
 error points at it with `source.pointer`.
 
-**GraphQL** (Shopify, Saleor). Each mutation's payload has a typed error list with a code enum:
+**GraphQL** (Saleor, GitLab). Each mutation's payload has a typed error list with a code enum:
 
 ```graphql
 type ArchiveBookPayload {
   book: Book
-  userErrors: [ArchiveBookUserError!]!
+  errors: [ArchiveBookError!]!
 }
-type ArchiveBookUserError {
+type ArchiveBookError {
   field: [String!]
   message: String!
-  code: ArchiveBookUserErrorCode!
+  code: ArchiveBookErrorCode!
 }
-enum ArchiveBookUserErrorCode {
+enum ArchiveBookErrorCode {
   NOT_FOUND
   FAILED_PRECONDITION
 }
 ```
 
-Shopify's Admin API (`ProductSetUserError`: `code`, `field`, `message`) and Saleor (`errors` with
-`field` and a `code` enum) both do this. A union of error types inside the payload (Hot Chocolate's
+Saleor names the list `errors`, each with `field`, `message` and a `code` enum (`AccountError`,
+`AccountErrorCode`); GitLab names it `errors` too, as plain strings. Shopify's `userErrors` is the
+same idea under another name, used by Shopify alone. A union of error types inside the payload (Hot Chocolate's
 mutation conventions) was considered; no well-known public API was found using it, and Jason wants
 idiomatic Relay (2026-11-17). It could come later as an option of the GraphQL output, once outputs
-take options; nothing here should rule that out. Every mutation, standard or custom, gets its own `<Mutation>UserError` and
-`<Mutation>UserErrorCode`; the shared `UserError` goes. A mutation with no codes has no
-`userErrors`.
+take options; nothing here should rule that out. Every mutation, standard or custom, gets its own `<Mutation>Error` and `<Mutation>ErrorCode`; the
+shared `UserError` and the `userErrors` field go. A mutation with no codes has no `errors`.
 
 Queries keep their results. A missing item is `null`, as GraphQL does. A custom `@query` with
 `@errors` reports a code in the response's `errors` entry as `extensions.code` (GraphQL spec 7.1.2),
@@ -169,7 +169,7 @@ A code that isn't an `ErrorCode` is `core/directive-uses` ("This value is not al
 argument."), as today.
 
 Reserved names change: AIP adds `ErrorInfo` and `BadRequest`; GraphQL drops `UserError` and adds
-`<Mutation>UserError` and `<Mutation>UserErrorCode` for each mutation it makes.
+`<Mutation>Error` and `<Mutation>ErrorCode` for each mutation it makes.
 
 ## Engine
 
