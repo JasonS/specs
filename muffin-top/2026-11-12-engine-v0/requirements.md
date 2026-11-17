@@ -2,7 +2,7 @@
 
 ## Problem and objective
 
-The graphqall notation ([docs/notation.md](https://github.com/JasonS/graphQall/blob/main/docs/notation.md))
+The Muffin Top notation ([docs/notation.md](https://github.com/JasonS/muffin-top/blob/main/docs/notation.md))
 defines how GraphQL SDL describes resources and how each API style renders them. Nothing implements
 it yet. Engine v0 is a TypeScript library that turns SDL written in the notation into a
 Google-style resource-oriented HTTP API: the design as data, plus an OpenAPI file. A CLI and a

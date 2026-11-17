@@ -4,8 +4,8 @@
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `@graphqall/core` and `@graphqall/style-aip` so that
-`render(sdl, googleHttpTarget(options))` turns SDL written in the graphqall notation into the
+**Goal:** Build `@muffin-top/core` and `@muffin-top/style-aip` so that
+`render(sdl, googleHttpTarget(options))` turns SDL written in the Muffin Top notation into the
 resource graph, the AIP design, one OpenAPI 3.1 file and the problems.
 
 **Architecture:** A chain of small immutable steps in core (split blocks, parse, build the graph
@@ -17,7 +17,7 @@ plus problems). Method builders come from a factory keyed by a tagged `MethodCho
 `pluralize`, `openapi3-ts`, `@seriousme/openapi-schema-validator` (tests only).
 
 **Spec:** `../specs/muffin-top/2026-11-12-engine-v0/spec.md`, with `requirements.md` beside it. The
-notation is `docs/notation.md` in the graphqall repository. Read all three before any task.
+notation is `docs/notation.md` in the Muffin Top repository. Read all three before any task.
 
 ## Global Constraints
 
@@ -146,7 +146,7 @@ with `makeTypeRef` and `makeValidation` inside the test body, not in an `it.each
 
 ---
 
-## Core (`@graphqall/core`)
+## Core (`@muffin-top/core`)
 
 ### Task 1: Workspace, problems and shared types
 
@@ -177,7 +177,7 @@ with `makeTypeRef` and `makeValidation` inside the test body, not in an `it.each
   and for each override.
 
 - [ ] **Step 1: Add the dependencies and the runtime boundary.** Add `graphql`, `neverthrow`,
-      `pluralize`, `@types/pluralize` to `@graphqall/core`. `tsconfig.src.json` extends the base
+      `pluralize`, `@types/pluralize` to `@muffin-top/core`. `tsconfig.src.json` extends the base
       with `lib: ["ES2022"]`, `types: []`, `include: ["src/**/*.ts"]`; `tsconfig.json` keeps tests
       and the Vitest config with Node types; `typecheck` runs both
       (`tsc --noEmit -p tsconfig.src.json && tsc --noEmit`). Split each `no-restricted-imports`
@@ -212,7 +212,7 @@ it.each(CODES)("gives %s a message", (code) => {
 ```
 
 - [ ] **Step 4: Run it to see it fail.**
-      `pnpm --filter @graphqall/core exec vitest run tests/problems.test.ts`. Expected: FAIL,
+      `pnpm --filter @muffin-top/core exec vitest run tests/problems.test.ts`. Expected: FAIL,
       `problem` not exported.
 - [ ] **Step 5: Implement `problems.ts`.** Messages are written for display in a UI (notation,
       Problems); tests never check them.
@@ -248,7 +248,7 @@ it.each(CODES)("gives %s a message", (code) => {
   - Review Focus 1: the same SDL with `\r\n` gives the same starts;
   - `splitBlocks('')` and `splitBlocks('# only\n')` give `[]`.
 - [ ] **Step 2: Run them to see them fail.**
-      `pnpm --filter @graphqall/core exec vitest run tests/split-blocks.test.ts`.
+      `pnpm --filter @muffin-top/core exec vitest run tests/split-blocks.test.ts`.
 - [ ] **Step 3: Implement `splitBlocks(sdl)`** as a character scanner that never throws.
 - [ ] **Step 4: Run them to see them pass.**
 - [ ] **Step 5: Commit** `core: split SDL into definition blocks`.
@@ -287,7 +287,7 @@ it.each(CODES)("gives %s a message", (code) => {
     graphql-js syntax error forms, and one unrecognized form, maps to its exact reworded text.
   - A failed block with a name becomes a stub; a failed unnamed block yields only its problem.
 - [ ] **Step 2: Run them to see them fail.**
-      `pnpm --filter @graphqall/core exec vitest run tests/parse-blocks.test.ts`.
+      `pnpm --filter @muffin-top/core exec vitest run tests/parse-blocks.test.ts`.
 - [ ] **Step 3: Implement.** Catch only `GraphQLError` from `parse`; rewrite its message from the
       table of the four forms in the spec (step 2); rethrow anything else.
 - [ ] **Step 4: Run them to see them pass.**
@@ -356,7 +356,7 @@ it.each(CODES)("gives %s a message", (code) => {
 Every check task below (5–9) has the same shape: an `it.each` table where each row is SDL from
 `makeResourceSdl` (only the lines the row is about, or plain text for a value type) and the exact
 list of problems (kind, code, severity, `where`, `path`), with rows that pass giving `[]`. Run with
-`pnpm --filter @graphqall/core exec vitest run tests/<file>`. Each task commits once its table
+`pnpm --filter @muffin-top/core exec vitest run tests/<file>`. Each task commits once its table
 passes and `pnpm mutation` catches every mutant. Spans in the rows are counted by hand from the
 factory's fixed layout.
 
@@ -520,11 +520,11 @@ Test `packages/core/tests/checks/identity.test.ts`, `packages/core/tests/checks/
   - Review Focus 2: `render('')` and `render('# notes\n')` give an empty graph and no problems.
 - [ ] **Steps 2–5.** Commit `core: targets and render`.
 
-## AIP style (`@graphqall/style-aip`)
+## AIP style (`@muffin-top/style-aip`)
 
 ### Task 12: Package, design types, names and AIP checks
 
-**Files:** Create `packages/style-aip/` (`package.json` with dependencies `@graphqall/core`
+**Files:** Create `packages/style-aip/` (`package.json` with dependencies `@muffin-top/core`
 (workspace), `graphql` and `openapi3-ts`, dev dependency `@seriousme/openapi-schema-validator`, and
 the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc --noEmit`;
 `tsconfig.json`, `tsconfig.src.json`, `vitest.config.ts`, `tests/setup.ts` copied from core),
@@ -544,7 +544,7 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
   to a builder, the style or the format with core's factories (Test factories), and `graphFrom(sdl)`
   in `tests/support.ts` gets a graph from SDL through core's public `render` with
   `makePassThroughTarget()` (core's `tests/support.ts` isn't exported). `package.json` has
-  `"name": "@graphqall/style-aip"` and `"exports": { ".": "./src/index.ts" }`.
+  `"name": "@muffin-top/style-aip"` and `"exports": { ".": "./src/index.ts" }`.
 
 - [ ] **Step 1: Write the failing tests.**
   - Names: `Book` owned by `Publisher` → pattern `publishers/{publisher}/books/{book}`, collection
@@ -561,7 +561,7 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
     `@subset`, `@expandable`, `@number` and a foreign directive → one `directive_ignored` warning
     each, at the directive use (R6, R7).
 - [ ] **Step 2: Run, see fail.**
-      `pnpm --filter @graphqall/style-aip exec vitest run tests/checks.test.ts tests/names.test.ts`.
+      `pnpm --filter @muffin-top/style-aip exec vitest run tests/checks.test.ts tests/names.test.ts`.
 - [ ] **Steps 3–4: Implement, see pass. Step 5: Commit** `style-aip: package, names and checks`.
 
 ### Task 13: `chooseMethods`, the factory and the standard builders
@@ -719,8 +719,8 @@ the same `typecheck` script as core, `tsc --noEmit -p tsconfig.src.json && tsc -
   - R6: rendering SDL with `@subset`, `@expandable` and `@number` (written on the same lines as
     other text, so no span moves) and the same SDL without them gives `toEqual` parsed
     `openapi.json` files, and the only extra problems are the three `directive_ignored` warnings.
-  - R4: importing only `@graphqall/core` by package name and the style through its entry file
-    `../src/index.ts` (the ESLint style boundary forbids `@graphqall/style-*` imports inside a style
+  - R4: importing only `@muffin-top/core` by package name and the style through its entry file
+    `../src/index.ts` (the ESLint style boundary forbids `@muffin-top/style-*` imports inside a style
     package), `composeTarget(aipStyle(), makeStubFormat())` (Decision 7) passes the AIP design to
     the stub and `render` returns the stub's files.
 - [ ] **Steps 3–5.** Run `pnpm check`. Commit `style-aip: Google HTTP target and examples`.

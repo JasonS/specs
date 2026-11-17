@@ -1,6 +1,6 @@
 # Engine v0: technical design
 
-Requirements: [requirements.md](requirements.md). Conventions: graphqall's `AGENTS.md`,
+Requirements: [requirements.md](requirements.md). Conventions: Muffin Top's `AGENTS.md`,
 `docs/notation.md`, `docs/principles` (P-01, P-03, P-04, P-07) and `docs/standards/typescript`
 (TS-01, TS-03, TS-04, TS-07).
 
@@ -40,7 +40,7 @@ exceptions only where it translates a graphql-js syntax error into a problem (P-
 flowchart TD
   caller([caller]) -->|"render(sdl, target)"| render
 
-  subgraph core["@graphqall/core"]
+  subgraph core["@muffin-top/core"]
     render["render()"]
     split["splitBlocks()"]
     parse["parseBlocks()"]
@@ -52,7 +52,7 @@ flowchart TD
     IFileFormat{{"IFileFormat&lt;D&gt;<br/>write(design)"}}
   end
 
-  subgraph aip["@graphqall/style-aip"]
+  subgraph aip["@muffin-top/style-aip"]
     aipStyle["aipStyle()"]
     aipChecks["aipChecks(graph)"]
     choose["chooseMethods(resource)"]
@@ -86,14 +86,14 @@ or use. A caller's own format plugs in at `IFileFormat` through `composeTarget` 
 
 ### Architectural changes
 
-- **`@graphqall/core`** (existing, empty): the pipeline up to the resource graph, the problem types,
+- **`@muffin-top/core`** (existing, empty): the pipeline up to the resource graph, the problem types,
   the target interfaces, `composeTarget`, `removeTypes` and `render`. It ships the **prelude**, an
   SDL string that declares `DateTime`, `Date`, `LocalTime`, the notation's directives, and the enums
   their arguments use: `Off { NONE }`, `GetMode { NONE MANY }`, `DeleteMode { NONE SOFT }` and
   `Format { EMAIL URI UUID }`. These names are taken: a user type with one of them is a
   `duplicate_definition`.
-- **`@graphqall/style-aip`** (new): the AIP design style, its checks, method builders and models,
-  the AIP OpenAPI format and the `googleHttpTarget` shortcut. It imports only `@graphqall/core`, as
+- **`@muffin-top/style-aip`** (new): the AIP design style, its checks, method builders and models,
+  the AIP OpenAPI format and the `googleHttpTarget` shortcut. It imports only `@muffin-top/core`, as
   the existing ESLint boundary rule requires.
 - **Dependencies** (approved by the owner): `graphql` for the lexer, parser, printer and AST;
   `neverthrow` for `Result` (TS-01); `pluralize` and `@types/pluralize` for plurals (notation,
@@ -503,7 +503,7 @@ Every code below goes into the notation's Problems section with the owner's appr
 The last five are raised by the AIP style, not core, which also raises `query_argument_nested`: see "AIP checks". The style sees only the
 graph, which keeps one span per node, so a type's problem covers its whole definition.
 
-### AIP design style (`@graphqall/style-aip`)
+### AIP design style (`@muffin-top/style-aip`)
 
 ```ts
 function aipStyle(): IDesignStyle<AipDesign>;
@@ -733,7 +733,7 @@ name; each model is a schema under `components.schemas`. Every operation has a `
 
 Tests follow P-07 and TS-07. They are written, or reviewed, by an agent that has not read the
 implementation, working from the notation, the requirements and this spec (P-07 rule 2). No test
-asserts a message. `@graphqall/style-aip` gets the same `expect.hasAssertions()` setup as core
+asserts a message. `@muffin-top/style-aip` gets the same `expect.hasAssertions()` setup as core
 (TS-07 rule 1).
 
 - **Core rules:** one `it.each` table per rule. Each row is a small SDL snippet and the exact
