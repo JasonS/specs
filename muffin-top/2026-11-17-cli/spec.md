@@ -77,8 +77,8 @@ prints it and exits 1.
 
 Written from this spec against `ICli` with a fake engine and fake files: each exit code, problems
 on standard error and the file on standard output, nothing written on an error, `--check` passing,
-failing on a missing file and on a changed file, and checking only the schema without `--out`, and every usage error. The code frame and help get
-tests of their text. One test runs the real engine on the Book example.
+failing on a missing file and on a changed file, and checking only the schema without `--out`, and
+every usage error. The code frame and help get tests of their text. One test runs the real engine on the Book example.
 
 ## Later
 
