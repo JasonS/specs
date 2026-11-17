@@ -20,8 +20,8 @@ One package, `@muffin-top/cli`, with two commands, modeled on openapi-generator,
 Arguments come first; there is no config file.
 
 ```text
-muffin-top generate <schema> --to <output> [--out <folder>] [--format json|yaml] [--casing <casing>]
-muffin-top check <schema> --to <output>
+muffin-top generate <schema> --to <output> [--out <folder>] [--format json|yaml] [--casing <casing>] [--reporter pretty|json]
+muffin-top check <schema> --to <output> [--reporter pretty|json]
 muffin-top --help
 muffin-top --version
 ```
@@ -36,17 +36,23 @@ muffin-top --version
   contract file. It takes `--to` because each standard warns about different things.
 - CI that keeps the contract committed runs `generate` and then `git diff --exit-code`, so a
   stale file fails the build with the diff in its log. The docs give this recipe.
-- Every problem prints to standard error, so a pipe carries only the file. A problem shows its
-  severity, message and rule code, then a code frame at its span in the schema, then the standard's
-  link when the rule has one and the title of each quick fix it offers.
+- A reporter shows the problems, chosen with `--reporter` (Biome's name for it; `--format` already
+  picks json or yaml). `pretty`, the default, prints to standard error, so a pipe carries only the
+  file: each problem's severity, message and rule code, then a code frame at its span in the
+  schema, then the standard's link when the rule has one and the title of each quick fix it offers,
+  and last how many errors and warnings there were. `json` prints the engine's problems as they are,
+  each with its file, to standard output for agents and CI, `[]` when there are none. Since
+  `generate` without `--out` prints the file there, `--reporter json` needs `--out` with it.
 - An error in the schema writes and prints no file. The file is all or nothing, so a code generator
   never reads a design with types removed.
-- Exit codes follow ESLint's: 0 when it worked (warnings allowed), 1 for errors in the schema, 2 for a usage mistake, such as an unknown output or a schema file that
-  can't be read.
+- Exit codes follow ESLint's: 0 when it worked (warnings allowed), 1 for errors in the schema, 2
+  for a usage mistake, such as an unknown output or a schema file that can't be read. A missing
+  file and a folder are said in the CLI's words; any other system error, such as permission, in
+  the system's (`EACCES: permission denied, open 'api/openapi.json'`).
 - `--help` lists the commands, the outputs (from the engine, never a copy), the options and
   examples. It is plain text in the terminal; nothing opens a web page.
-- Colors come from `util.styleText`, which turns them off when the stream isn't a terminal or
-  `NO_COLOR` is set.
+- Colors come from `util.styleText`, off when the stream isn't a terminal or `NO_COLOR` is set,
+  on with `FORCE_COLOR`, as Node decides for each stream.
 
 The CLI holds no rule, output or naming of its own. It reads files, calls the engine, and prints
 what the engine returns. Anything it shows, a library user gets from `@muffin-top/engine` too.
@@ -58,28 +64,46 @@ is the CLI's own, because `@babel/code-frame` highlights JavaScript, not GraphQL
 
 ### Parts
 
-- `main.ts`, the composition root and the `bin`: makes the engine, the file reader and writer and
-  the CLI, runs it with `process.argv`, and sets `process.exitCode`.
+- `main.ts`, the composition root and the `bin`: makes every part below, runs the CLI with
+  `process.argv`, and sets `process.exitCode`.
 - `parseCommand(args, outputs)`: a function from the arguments to a `Command` (help, version,
-  generate or check) or a usage error naming what is wrong.
-- `ICli` with `run(args): Promise<ExitCode>`: reads the schema, renders it, prints problems, and
-  writes or prints the files. It takes `IEngine`, a file reader, a file writer and the two
-  streams through its constructor.
-- `IFileReader` and `IFileWriter`, implemented over `node:fs/promises`: reading returns a
-  `Result` whose error is a file that can't be read; writing makes the folders it needs.
-- `formatProblem`, `formatHelp`: functions from the engine's data to text, given a `paint` function
-  so tests read plain text.
+  generate or check) or a `CliError` naming what is wrong.
+- `ICli.run(args): Promise<ExitCode>`: parses, prints help or the version, or hands generate and
+  check to the runner, and prints any `CliError`. It takes the engine's outputs, the runner and the
+  two streams.
+- `ISchemaRunner.run(command)`: reads the schema, renders it, reports the problems and, for
+  generate without errors, puts the files. It returns whether the schema had errors, or a
+  `CliError`.
+- `IReporter.report(problems, schema)`: `PrettyReporter` on standard error and `JsonReporter` on
+  standard output, as ESLint's formatters and Biome's reporters are. Each takes its stream.
+- `IFileOutput.put(files, out)`: writes the files under `out`, saying each, or prints the one file
+  without it.
+- `IFileReader` and `IFileWriter`, over `node:fs/promises`: each returns a `Result` whose error is
+  a file that can't be read or written; writing makes the folders it needs.
+- `formatHelp` and the code frame: functions from the engine's data to text, given a `paint`
+  function so tests read plain text.
 
 An unexpected engine error (`code: 'unexpected'`) is thrown with its cause, as P-01 asks: Node
 prints it and exits 1.
 
 ### Tests
 
-Written from this spec against `ICli` with a fake engine and fake files: each exit code, problems
-on standard error and the file on standard output, nothing written on an error, `check`
-passing and failing, and every usage error. The code frame and help get tests of their text. One test runs the real engine on the Book example.
+Written from this spec, each part with hand-written fakes of the parts it takes: each exit code,
+every usage error, each reporter's text, the file on standard output or under the folder, nothing
+written on an error, and every file error. The file reader and writer run on a temporary folder.
+A few tests run the `muffin-top` command itself with the real engine on a Book.
 
 ## Later
+
+- `explain`, as `rustc --explain`: `muffin-top explain` lists every directive with its one-line
+  description and ends with a hint to run `explain @name`; `muffin-top explain @subset` or
+  `explain core/one-id-field` prints a directive's usage, arguments and an example, or what a rule
+  checks and how to fix it.
+- One source for every description. A directive's and a rule's description and example live once,
+  in the engine, and everything that shows them reads them from there: editor autocomplete, CLI
+  help and `explain`, and the reference pages of the website's docs, which are generated from it
+  when the site is built, never copied by hand. A check in `pnpm check` fails when the generated
+  pages are stale. This is a requirement, not a nicety: the docs and the CLI must never disagree.
 
 - `breaking`: compare the contract with a committed snapshot or a git branch, through each output's
   own checker (buf for proto, graphql-inspector for GraphQL). Each output owns its checker.
