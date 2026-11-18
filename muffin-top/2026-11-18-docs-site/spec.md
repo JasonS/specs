@@ -86,7 +86,7 @@ at our dark values. Nunito Black for headings and the wordmark, as the playgroun
 
 | Part                  | Where                     | Does                                                                                                                    |
 | --------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Theme                 | `packages/theme`          | The CSS variables, light and dark. No code.                                                                             |
+| Theme                 | `packages/theme`          | The CSS variables, light and dark, and Tailwind's utilities for them, in place of Tailwind's own palette. No code.      |
 | Site                  | `apps/site`               | Astro with Starlight. The landing page, the docs, and the playground's build copied under `/play`.                      |
 | Landing copy          | `apps/site/src/content/`  | One file holding every word on the landing page, checked by a schema so a missing field fails the build.               |
 | `<Example>`           | `apps/site/src/components` | Takes SDL from the page, renders it in each output, and shows tabs. Fails the build when the SDL has an error.          |
