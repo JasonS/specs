@@ -99,7 +99,9 @@ at our dark values. Nunito Black for headings and the wordmark, as the playgroun
 Small pull requests, each reviewed before the next:
 
 1. Move the theme into `packages/theme`; the playground imports it. Nothing looks different.
-2. Add `apps/site` with Starlight, the theme, the sidebar, and empty pages for each section.
+2. Add `apps/site` with Starlight, the theme, and its first two pages, Introduction and Getting
+   started. Each later step adds its own section to the sidebar, so the site never shows an empty
+   page.
 3. Add `<Directive>` and a page per directive, with the check that every directive has one.
 4. Add `<Example>` and the shared playground link.
 5. Add the snippet page.
